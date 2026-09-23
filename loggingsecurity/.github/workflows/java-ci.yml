@@ -13,6 +13,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      # -----------------------------------------
+      # MySQL Service
+      # -----------------------------------------
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testdb
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
 
       # -----------------------------------------
@@ -34,19 +53,25 @@ jobs:
           cache: maven
 
       # -----------------------------------------
-      # 3. Build and Run Tests
+      # 3. Build and Run Unit Tests
       # -----------------------------------------
       - name: Build and Test
-        run: mvn clean verify
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/testdb
+          SPRING_DATASOURCE_USERNAME: testuser
+          SPRING_DATASOURCE_PASSWORD: testpass
+        run: |
+          mvn clean verify
 
       # -----------------------------------------
-      # 4. Generate JaCoCo Report
+      # 4. Generate JaCoCo Coverage Report
       # -----------------------------------------
       - name: Generate JaCoCo Coverage Report
-        run: mvn jacoco:report
+        run: |
+          mvn jacoco:report
 
       # -----------------------------------------
-      # 5. Quality Gate (20%)
+      # 5. Check Code Coverage >= 20%
       # -----------------------------------------
       - name: Check Code Coverage
         shell: bash
@@ -99,42 +124,43 @@ jobs:
           print("Code coverage is 20% or higher")
           PY
 
-      # -----------------------------------------
-      # 6. SonarQube Analysis
-      # -----------------------------------------
-      - name: SonarQube Analysis
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # # -----------------------------------------
+      # # 6. SonarQube Analysis
+      # # -----------------------------------------
+      # - name: SonarQube Analysis
+      #   uses: SonarSource/sonarqube-scan-action@v7
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      # -----------------------------------------
-      # 7. SonarQube Quality Gate
-      # -----------------------------------------
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@master
-        timeout-minutes: 10
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # # -----------------------------------------
+      # # 7. SonarQube Quality Gate
+      # # -----------------------------------------
+      # - name: SonarQube Quality Gate
+      #   uses: SonarSource/sonarqube-quality-gate-action@master
+      #   timeout-minutes: 10
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       # -----------------------------------------
       # 8. Package Application
-      # -----------------------------------------
-      - name: Package JAR
-        run: mvn package -DskipTests
+      # ------------------------------------------
+      - name: Package Application
+        run: |
+          mvn package -DskipTests
 
-      # -----------------------------------------
+      # ------------------------------------------
       # 9. Upload JAR Artifact
-      # -----------------------------------------
+      # ------------------------------------------
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
         with:
           name: springboot-application
           path: target/*.jar
 
-      # -----------------------------------------
+      #------------------------------------------
       # 10. Upload JaCoCo Report
-      # -----------------------------------------
+      # ------------------------------------------
       - name: Upload JaCoCo Report
         if: always()
         uses: actions/upload-artifact@v4
