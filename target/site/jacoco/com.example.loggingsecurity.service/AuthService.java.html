@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">loggingsecurity</a> &gt; <a href="index.source.html" class="el_package">com.example.loggingsecurity.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">package com.example.loggingsecurity.service;
+
+import com.example.loggingsecurity.dto.LoginRequest;
+import com.example.loggingsecurity.dto.SignupRequest;
+import com.example.loggingsecurity.entity.User;
+import com.example.loggingsecurity.exception.UserAlreadyExistsException;
+import com.example.loggingsecurity.repository.UserRepository;
+import com.example.loggingsecurity.security.JwtService;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AuthService {
+
+<span class="fc" id="L22">    private static final Logger logger =</span>
+<span class="fc" id="L23">            LogManager.getLogger(AuthService.class);</span>
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final CustomUserDetailsService userDetailsService;
+    private final JwtService jwtService;
+
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            CustomUserDetailsService userDetailsService,
+<span class="fc" id="L36">            JwtService jwtService) {</span>
+
+<span class="fc" id="L38">        this.userRepository = userRepository;</span>
+<span class="fc" id="L39">        this.passwordEncoder = passwordEncoder;</span>
+<span class="fc" id="L40">        this.authenticationManager = authenticationManager;</span>
+<span class="fc" id="L41">        this.userDetailsService = userDetailsService;</span>
+<span class="fc" id="L42">        this.jwtService = jwtService;</span>
+<span class="fc" id="L43">    }</span>
+
+    public String signUp(SignupRequest request) {
+
+<span class="nc" id="L47">        logger.info(</span>
+                &quot;Sign-up request received for username: {}&quot;,
+<span class="nc" id="L49">                request.getUsername()</span>
+        );
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (userRepository.existsByUsername(request.getUsername())) {</span>
+
+<span class="nc" id="L54">            logger.warn(</span>
+                    &quot;Username already exists: {}&quot;,
+<span class="nc" id="L56">                    request.getUsername()</span>
+            );
+
+<span class="nc" id="L59">            throw new UserAlreadyExistsException(</span>
+                    &quot;Username already exists: &quot;
+<span class="nc" id="L61">                            + request.getUsername()</span>
+            );
+        }
+
+<span class="nc" id="L65">        String encodedPassword =</span>
+<span class="nc" id="L66">                passwordEncoder.encode(request.getPassword());</span>
+
+<span class="nc" id="L68">        User user = new User(</span>
+<span class="nc" id="L69">                request.getUsername(),</span>
+                encodedPassword
+        );
+
+<span class="nc" id="L73">        User savedUser = userRepository.save(user);</span>
+
+<span class="nc" id="L75">        logger.info(</span>
+                &quot;User registered successfully. ID: {}&quot;,
+<span class="nc" id="L77">                savedUser.getId()</span>
+        );
+
+<span class="nc" id="L80">        return &quot;User registered successfully&quot;;</span>
+    }
+
+    public String login(LoginRequest request) {
+
+<span class="nc" id="L85">        logger.info(</span>
+                &quot;Login request received for username: {}&quot;,
+<span class="nc" id="L87">                request.getUsername()</span>
+        );
+
+<span class="nc" id="L90">        authenticationManager.authenticate(</span>
+                new UsernamePasswordAuthenticationToken(
+<span class="nc" id="L92">                        request.getUsername(),</span>
+<span class="nc" id="L93">                        request.getPassword()</span>
+                )
+        );
+
+<span class="nc" id="L97">        UserDetails userDetails =</span>
+<span class="nc" id="L98">                userDetailsService.loadUserByUsername(</span>
+<span class="nc" id="L99">                        request.getUsername()</span>
+                );
+
+<span class="nc" id="L102">        String token =</span>
+<span class="nc" id="L103">                jwtService.generateToken(userDetails);</span>
+
+<span class="nc" id="L105">        logger.info(</span>
+                &quot;Login successful for username: {}&quot;,
+<span class="nc" id="L107">                request.getUsername()</span>
+        );
+
+<span class="nc" id="L110">        return token;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

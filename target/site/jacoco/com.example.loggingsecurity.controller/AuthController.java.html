@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">loggingsecurity</a> &gt; <a href="index.source.html" class="el_package">com.example.loggingsecurity.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.example.loggingsecurity.controller;
+
+import com.example.loggingsecurity.dto.LoginRequest;
+import com.example.loggingsecurity.dto.SignupRequest;
+import com.example.loggingsecurity.service.AuthService;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/auth&quot;)
+public class AuthController {
+
+    private final AuthService authService;
+
+<span class="fc" id="L20">    public AuthController(AuthService authService) {</span>
+<span class="fc" id="L21">        this.authService = authService;</span>
+<span class="fc" id="L22">    }</span>
+
+    @PostMapping(&quot;/signup&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; signup(
+            @RequestBody SignupRequest request) {
+
+<span class="nc" id="L28">        String message = authService.signUp(request);</span>
+
+<span class="nc" id="L30">        return ResponseEntity</span>
+<span class="nc" id="L31">                .status(HttpStatus.CREATED)</span>
+<span class="nc" id="L32">                .body(</span>
+<span class="nc" id="L33">                        Map.of(</span>
+                                &quot;message&quot;,
+                                message
+                        )
+                );
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; login(
+            @RequestBody LoginRequest request) {
+
+<span class="nc" id="L44">        String token = authService.login(request);</span>
+
+<span class="nc" id="L46">        return ResponseEntity.ok(</span>
+<span class="nc" id="L47">                Map.of(</span>
+                        &quot;token&quot;,
+                        token
+                )
+        );
+    }
+
+    @GetMapping(&quot;/profile&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; profile(
+            Authentication authentication) {
+
+<span class="nc" id="L58">        return ResponseEntity.ok(</span>
+<span class="nc" id="L59">                Map.of(</span>
+                        &quot;username&quot;,
+<span class="nc" id="L61">                        authentication.getName(),</span>
+                        &quot;message&quot;,
+                        &quot;Protected API accessed&quot;
+                )
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
